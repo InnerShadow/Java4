@@ -144,6 +144,21 @@ Double.SIZE/8 байт;
         }
 public static void main(String[] args) {
 
+    try(DataOutputStream dos = new DataOutputStream(new FileOutputStream("data.bin")))
+    {
+    for(Double i = -10.0; i < 10; i += 0.1){
+
+            // записываем значения
+            dos.writeDouble(i);
+            dos.writeDouble(Math.sin(Math.pow(i, 2)) + Math.log(Math.pow(i, 2) + 1));
+
+        }
+
+    }catch(IOException ex){
+
+        System.out.println(ex.getMessage());
+    }
+
 
 // Создать и показать экземпляр главного окна приложения
         MainFrame frame = new MainFrame();
