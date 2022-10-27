@@ -178,7 +178,7 @@ minY
         canvas.setStroke(markerStroke);
         canvas.setStroke(new BasicStroke(2));
 // Выбрать красный цвета для контуров маркеров
-        canvas.setColor(Color.BLACK);
+        //canvas.setColor(Color.BLACK);
 // Выбрать красный цвет для закрашивания маркеров внутри
         canvas.setPaint(Color.BLACK);
 // Шаг 2 - Организовать цикл по всем точкам графика
@@ -195,6 +195,26 @@ minY
             Point2D.Double corner = shiftPoint(center, 11, 11);
 // Задать эллипс по центру и диагонали
 //            marker.setFrameFromCenter(center, corner);
+            boolean sign = true;
+            int prev_num = 0;
+
+            String s = String.valueOf(center.y);
+            for(int i = 0; i < s.length() / 4; i++){
+                if(s.charAt(i) == '.'){
+                    continue;
+                }
+                if(Integer.valueOf(s.charAt(i)) < prev_num){
+                    sign = false;
+                    break;
+                }
+                prev_num = Integer.valueOf(s.charAt(i));
+            }
+            if(sign){
+                System.out.println(s);
+                canvas.setColor(Color.ORANGE);
+            } else {
+                canvas.setColor(Color.BLACK);
+            }
 
             canvas.draw(new Line2D.Double(center.x - 5.5, center.y - 5.5, center.x + 5.5, center.y + 5.5)); // Начертить контур маркера
             canvas.draw(new Line2D.Double(center.x + 5.5, center.y - 5.5, center.x - 5.5, center.y + 5.5));
