@@ -27,6 +27,7 @@ public class GraphicsDisplay extends JPanel {
     private BasicStroke AreaStroke;
     // Различные шрифты отображения надписей
     private Font axisFont;
+    private Font areaFont;
     public GraphicsDisplay() {
 // Цвет заднего фона области отображения - белый
         setBackground(Color.WHITE);
@@ -42,6 +43,7 @@ public class GraphicsDisplay extends JPanel {
                 BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
 // Шрифт для подписей осей координат
         axisFont = new Font("Serif", Font.BOLD, 36);
+        areaFont = new Font("Serif", Font.BOLD, 8);
     }
 // Данный метод вызывается из обработчика элемента меню "Открыть файл сграфиком"
     // главного окна приложения в случае успешной загрузки данных
@@ -134,12 +136,14 @@ minY
 // Шаг 8 - В нужном порядке вызвать методы отображения элементов графика
 // Порядок вызова методов имеет значение, т.к. предыдущий рисунок будет затираться последующим
 // Первыми (если нужно) отрисовываются оси координат.
+        if(showArea) paintArea(canvas);
         if (showAxis) paintAxis(canvas);
 // Затем отображается сам график
         paintGraphics(canvas);
+
 // Затем (если нужно) отображаются маркеры точек, по которым строился график.
         if (showMarkers) paintMarkers(canvas);
-        if(showArea) paintArea(canvas);
+
 // Шаг 9 - Восстановить старые настройки холста
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
@@ -232,18 +236,11 @@ minY
     }
 
     protected void paintArea(Graphics2D canvas) {
-        //Point2D.Double prevSpot = xyToPoint(graphicsData[0][0], graphicsData[0][1]);
-
-
-
-
         canvas.setStroke(new BasicStroke(2));
         System.out.println(minY);
         System.out.println();
         Double mainY = xyToPoint(0, 0).y;
-        //canvas.draw(new Line2D.Double(0, 0, 100, mainY));
-        Point2D.Double prev_spot = xyToPoint(graphicsData[0][0], graphicsData[0][1]);
-
+        FontRenderContext context = canvas.getFontRenderContext();
 
         int i = 0;
         System.out.println(mainY);
@@ -252,8 +249,10 @@ minY
                 break;
             }
         }
-        canvas.setColor(Color.GREEN);
+
         for(; i < graphicsData.length - 2; i++){
+            canvas.setColor(Color.GREEN);
+            Double ValueOfarea = 0.d;
             Point2D.Double beginSpot = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
             GeneralPath area = new GeneralPath();
             for(; i < graphicsData.length - 2; i++) {
@@ -264,12 +263,18 @@ minY
                 }
             }
             Point2D.Double endSpot = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+            Point2D.Double highestPoint = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
             for(; i < graphicsData.length - 2; i++) {
+                if(highestPoint.y > xyToPoint(graphicsData[i][0], graphicsData[i][1]).y){
+                    highestPoint = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+                }
                 if (xyToPoint(graphicsData[i][0], graphicsData[i][1]).y > mainY) {
                     i--;
                     endSpot = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
                     break;
                 }
+                ValueOfarea += ((graphicsData[i - 1][1] + graphicsData[i][1]) / 2) *
+                        (graphicsData[i][0] - graphicsData[i - 1][0]);
                 Point2D.Double ptr = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
                 area.lineTo(ptr.x, ptr.y);
             }
@@ -280,18 +285,29 @@ minY
                 }
             }
             if(!sign) {
+
                 area.moveTo(endSpot.x, endSpot.y);
                 area.moveTo(beginSpot.x, beginSpot.y);
                 area.closePath();
                 canvas.draw(area);
                 canvas.fill(area);
+
+                canvas.setColor(Color.BLUE);
+                canvas.setFont(areaFont);
+                String strArea = String.valueOf(ValueOfarea);
+                String finalArea = "";
+                for(int j = 0; j < 5; j++){
+                    finalArea += strArea.charAt(j);
+                }
+                Rectangle2D bounds = areaFont.getStringBounds(finalArea, context);
+                Point2D.Double labelPos = new Point2D.Double();
+                labelPos.x = (float)(beginSpot.x + (endSpot.x - beginSpot.x) / 4 - 2);
+                labelPos.y = (float)(mainY + (highestPoint.y - mainY) / 4);
+                System.out.println(finalArea);
+                canvas.drawString(finalArea, (float)labelPos.x, (float)labelPos.y);
             }
             //canvas.draw(new Line2D.Double(beginSpot.x, beginSpot.y, endSpot.x, endSpot.y));
         }
-
-
-
-
     }
     // Метод, обеспечивающий отображение осей координат
     protected void paintAxis(Graphics2D canvas) {
