@@ -21,10 +21,11 @@ public class MainFrame extends JFrame {
     private static final int WIDTH = 800;
     private static final int HEIGHT = 600;
 // Объект диалогового окна для выбора файлов
-private JFileChooser fileChooser = null;
+    private JFileChooser fileChooser = null;
     // Пункты меню
     private JCheckBoxMenuItem showAxisMenuItem;
     private JCheckBoxMenuItem showMarkersMenuItem;
+    private JCheckBoxMenuItem showAreaMenuItem;
     // Компонент-отображатель графика
     private GraphicsDisplay display = new GraphicsDisplay();
     // Флаг, указывающий на загруженность данных графика
@@ -59,10 +60,10 @@ private JFileChooser fileChooser = null;
         }
     };
 // Добавить соответствующий элемент меню
-fileMenu.add(openGraphicsAction);
+    fileMenu.add(openGraphicsAction);
     // Создать пункт меню "График"
     JMenu graphicsMenu = new JMenu("График");
-menuBar.add(graphicsMenu);
+    menuBar.add(graphicsMenu);
     // Создать действие для реакции на активацию элемента "Показывать оси координат"
     Action showAxisAction = new AbstractAction("Показывать оси координат") {
     public void actionPerformed(ActionEvent event) {
@@ -71,14 +72,31 @@ menuBar.add(graphicsMenu);
         display.setShowAxis(showAxisMenuItem.isSelected());
     }
 };
-showAxisMenuItem = new JCheckBoxMenuItem(showAxisAction);
+        showAxisMenuItem = new JCheckBoxMenuItem(showAxisAction);
 // Добавить соответствующий элемент в меню
         graphicsMenu.add(showAxisMenuItem);
 // Элемент по умолчанию включен (отмечен флажком)
         showAxisMenuItem.setSelected(true);
+
+        Action showAreaAction = new AbstractAction("Show area") {
+            public void actionPerformed(ActionEvent event) {
+// свойство showAxis класса GraphicsDisplay истина, если элемент меню
+// showAxisMenuItem отмечен флажком, и ложь - впротивном случае
+                display.setShowArea(showAreaMenuItem.isSelected());
+            }
+        };
+        showAreaMenuItem = new JCheckBoxMenuItem(showAreaAction);
+// Добавить соответствующий элемент в меню
+        graphicsMenu.add(showAreaMenuItem);
+// Элемент по умолчанию включен (отмечен флажком)
+        showAreaMenuItem.setSelected(true);
+        showAreaMenuItem.setEnabled(false);
+
+
+
 // Повторить действия для элемента "Показывать маркеры точек"
         Action showMarkersAction = new AbstractAction("Показывать маркеры точек") {
-public void actionPerformed(ActionEvent event) {
+    public void actionPerformed(ActionEvent event) {
 // по аналогии с showAxisMenuItem
         display.setShowMarkers(showMarkersMenuItem.isSelected());
         }
@@ -92,6 +110,9 @@ public void actionPerformed(ActionEvent event) {
 // Установить GraphicsDisplay в цент граничной компоновки
         getContentPane().add(display, BorderLayout.CENTER);
         }
+
+
+
 // Считывание данных графика из существующего файла
 protected void openGraphics(File selectedFile) {
         try {
@@ -111,22 +132,21 @@ Double.SIZE/8 байт;
         int i = 0;
         Double val = 0.1;
         while (in.available()>0) {
-    // Первой из потока читается координата точки X
+            // Первой из потока читается координата точки X
             Double x = in.readDouble();
-    // Затем - значение графика Y в точке X
+            // Затем - значение графика Y в точке X
             Double y = in.readDouble();
-            System.out.println("x: " + String.valueOf(x));
-            System.out.println("y: " + String.valueOf(y));
-    // Прочитанная пара координат добавляется в массив
-            graphicsData[i++] = new Double[] {x, y};
+//            System.out.println("x: " + String.valueOf(x));
+//            System.out.println("y: " + String.valueOf(y));
+            // Прочитанная пара координат добавляется в массив
+            graphicsData[i++] = new Double[]{x, y};
         }
-        int GGG = 1;
 // Шаг 4 - Проверка, имеется ли в списке в результате чтения хотя бы одна пара координат
         if (graphicsData!=null && graphicsData.length>0) {
 // Да - установить флаг загруженности данных
-        fileLoaded = true;
+            fileLoaded = true;
 // Вызывать метод отображения графика
-        display.showGraphics(graphicsData);
+            display.showGraphics(graphicsData);
         }
 // Шаг 5 - Закрыть входной поток
         in.close();
@@ -134,30 +154,33 @@ Double.SIZE/8 байт;
 // В случае исключительной ситуации типа "Файл не найден" показать сообщение об ошибке
         JOptionPane.showMessageDialog(MainFrame.this, "Указанный файл не найден", "Ошибка загрузки данных",
                 JOptionPane.WARNING_MESSAGE);
+            showAreaMenuItem.setEnabled(false);
         return;
         } catch (IOException ex) {
 // В случае ошибки ввода из файлового потока показатьсообщение об ошибке
         JOptionPane.showMessageDialog(MainFrame.this, "Ошибка чтения координат точек из файла", "Ошибка загрузки данных",
         JOptionPane.WARNING_MESSAGE);
+            showAreaMenuItem.setEnabled(false);
         return;
         }
+        showAreaMenuItem.setEnabled(true);
         }
 public static void main(String[] args) {
 
-//    try(DataOutputStream dos = new DataOutputStream(new FileOutputStream("data.bin")))
-//    {
-//    for(Double i = -10.0; i < 10; i += 0.1){
-//
-//            // записываем значения
-//            dos.writeDouble(i);
-//            dos.writeDouble(Math.sin(Math.pow(i, 2)) + Math.log(Math.pow(i, 2) + 1) - 2);
-//
-//        }
-//
-//    }catch(IOException ex){
-//
-//        System.out.println(ex.getMessage());
-//    }
+    try(DataOutputStream dos = new DataOutputStream(new FileOutputStream("data_2.bin")))
+    {
+    for(Double i = -10.0; i < 10; i += 0.1){
+
+            // записываем значения
+            dos.writeDouble(i);
+            dos.writeDouble(Math.sin(Math.pow(i, 2)) + Math.log(Math.pow(i, 2) + 1) - 3);
+
+        }
+
+    }catch(IOException ex){
+
+        System.out.println(ex.getMessage());
+    }
 
 
 // Создать и показать экземпляр главного окна приложения

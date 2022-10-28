@@ -12,6 +12,7 @@ public class GraphicsDisplay extends JPanel {
     // Флаговые переменные, задающие правила отображения графика
     private boolean showAxis = true;
     private boolean showMarkers = true;
+    private boolean showArea = true;
     // Границы диапазона пространства, подлежащего отображению
     private double minX;
     private double maxX;
@@ -23,6 +24,7 @@ public class GraphicsDisplay extends JPanel {
     private BasicStroke graphicsStroke;
     private BasicStroke axisStroke;
     private BasicStroke markerStroke;
+    private BasicStroke AreaStroke;
     // Различные шрифты отображения надписей
     private Font axisFont;
     public GraphicsDisplay() {
@@ -53,6 +55,11 @@ public class GraphicsDisplay extends JPanel {
 // Изменение любого параметра приводит к перерисовке области
     public void setShowAxis(boolean showAxis) {
         this.showAxis = showAxis;
+        repaint();
+    }
+
+    public void setShowArea(boolean showArea){
+        this.showArea = showArea;
         repaint();
     }
     public void setShowMarkers(boolean showMarkers) {
@@ -132,6 +139,7 @@ minY
         paintGraphics(canvas);
 // Затем (если нужно) отображаются маркеры точек, по которым строился график.
         if (showMarkers) paintMarkers(canvas);
+        if(showArea) paintArea(canvas);
 // Шаг 9 - Восстановить старые настройки холста
         canvas.setFont(oldFont);
         canvas.setPaint(oldPaint);
@@ -209,11 +217,10 @@ minY
                 }
                 prev_num = Integer.valueOf(s.charAt(i));
             }
-            if(sign){
-                System.out.println(s);
+            canvas.setColor(Color.BLACK);
+            if(sign) {
+                //System.out.println(s);
                 canvas.setColor(Color.ORANGE);
-            } else {
-                canvas.setColor(Color.BLACK);
             }
 
             canvas.draw(new Line2D.Double(center.x - 5.5, center.y - 5.5, center.x + 5.5, center.y + 5.5)); // Начертить контур маркера
@@ -222,6 +229,69 @@ minY
             canvas.draw(new Line2D.Double(center.x - 5.5, center.y, center.x + 5.5, center.y));
         }
         canvas.setStroke(markerStroke);
+    }
+
+    protected void paintArea(Graphics2D canvas) {
+        //Point2D.Double prevSpot = xyToPoint(graphicsData[0][0], graphicsData[0][1]);
+
+
+
+
+        canvas.setStroke(new BasicStroke(2));
+        System.out.println(minY);
+        System.out.println();
+        Double mainY = xyToPoint(0, 0).y;
+        //canvas.draw(new Line2D.Double(0, 0, 100, mainY));
+        Point2D.Double prev_spot = xyToPoint(graphicsData[0][0], graphicsData[0][1]);
+
+
+        int i = 0;
+        System.out.println(mainY);
+        for(; i < graphicsData.length - 1; i++){
+            if(xyToPoint(graphicsData[i][0], graphicsData[i][1]).y > mainY){
+                break;
+            }
+        }
+        canvas.setColor(Color.GREEN);
+        for(; i < graphicsData.length - 2; i++){
+            Point2D.Double beginSpot = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+            GeneralPath area = new GeneralPath();
+            for(; i < graphicsData.length - 2; i++) {
+                if (xyToPoint(graphicsData[i][0], graphicsData[i][1]).y < mainY) {
+                    beginSpot = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+                    area.moveTo(beginSpot.x, beginSpot.y);
+                    break;
+                }
+            }
+            Point2D.Double endSpot = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+            for(; i < graphicsData.length - 2; i++) {
+                if (xyToPoint(graphicsData[i][0], graphicsData[i][1]).y > mainY) {
+                    i--;
+                    endSpot = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+                    break;
+                }
+                Point2D.Double ptr = xyToPoint(graphicsData[i][0], graphicsData[i][1]);
+                area.lineTo(ptr.x, ptr.y);
+            }
+            boolean sign = true;
+            for(int i_n = i; i_n < graphicsData.length - 2; i_n++){
+                if(xyToPoint(graphicsData[i_n][0], graphicsData[i_n][1]).y > mainY){
+                    sign = false;
+                }
+            }
+            if(!sign) {
+                area.moveTo(endSpot.x, endSpot.y);
+                area.moveTo(beginSpot.x, beginSpot.y);
+                area.closePath();
+                canvas.draw(area);
+                canvas.fill(area);
+            }
+            //canvas.draw(new Line2D.Double(beginSpot.x, beginSpot.y, endSpot.x, endSpot.y));
+        }
+
+
+
+
     }
     // Метод, обеспечивающий отображение осей координат
     protected void paintAxis(Graphics2D canvas) {
