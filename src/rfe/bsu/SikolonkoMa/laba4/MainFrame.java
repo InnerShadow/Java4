@@ -100,10 +100,10 @@ protected void openGraphics(File selectedFile) {
             int i = 0;
             Double val = 0.1;
             while (in.available()>0) {
-            Double x = in.readDouble();
-            Double y = in.readDouble();
-            graphicsData[i++] = new Double[]{x, y};
-        }
+                Double x = in.readDouble();
+                Double y = in.readDouble();
+                graphicsData[i++] = new Double[]{x, y};
+            }
         if (graphicsData!=null && graphicsData.length>0) {
             fileLoaded = true;
             display.displayGraphics(graphicsData);

@@ -21,6 +21,7 @@ public class GraphicsDisplay extends JPanel {
     private boolean showMarkers = true;
     private boolean showArea = false;
     private boolean Rotate = false;
+    private boolean AbilytyToRotate = true;
     private double minX;
     private double maxX;
     private double minY;
@@ -90,6 +91,16 @@ public class GraphicsDisplay extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
+//        if(Rotate && AbilytyToRotate){
+//            System.out.println("Xyi");
+//            double tmp = maxX;
+//            maxX = maxY;
+//            maxY = tmp;
+//            tmp = minX;
+//            minX = minY;
+//            minY = tmp;
+//            AbilytyToRotate = false;
+//        }
         double scaleX = getSize().getWidth() / (viewport[1][0] - viewport[0][0]);;
         double scaleY = getSize().getHeight() / (viewport[0][1] - viewport[1][1]);
 
@@ -149,14 +160,6 @@ public class GraphicsDisplay extends JPanel {
     }
 
     protected void DoRotate(Graphics2D canvas) {
-//        if(Rotate){
-//            double tmp = minX;
-//            minX = minY;
-//            minY = tmp;
-//            tmp = maxX;
-//            maxX = maxY;
-//            maxY = tmp;
-//        }
         Point2D.Double ptr = xyToPoint(0, 0);
         canvas.rotate(3 * Math.PI / 2, ptr.x, ptr.y);
         repaint();
@@ -182,31 +185,19 @@ public class GraphicsDisplay extends JPanel {
                 maxY = graphicsData[i][1];
             }
         }
+        
+        if(Rotate){
+            double tmp = maxX;
+            maxX = maxY;
+            maxY = tmp;
+            tmp = minX;
+            minX = minY;
+            minY = tmp;
+        }
 
         firstlunc = true;
         zoomToRegion(minX, maxY, maxX, minY);
     }
-//    protected void paintGraphics(Graphics2D canvas) {
-//        Stroke dashed = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,
-//                0, new float[]{16, 4, 4, 4, 4, 4, 8, 4, 8, 4}, 0);
-//        canvas.setStroke(dashed);
-//
-//        canvas.setColor(Color.RED);
-//        GeneralPath graphics = new GeneralPath();
-//
-//        for (int i = 0; i<graphicsData.length; i++) {
-//            Point2D.Double point = xyToPoint(graphicsData[i][0],
-//                    graphicsData[i][1]);
-//            if (i>0) {
-//                graphics.lineTo(point.getX(), point.getY());
-//            } else {
-//                graphics.moveTo(point.getX(), point.getY());
-//            }
-//        }
-//        canvas.draw(graphics);
-//        canvas.setStroke(graphicsStroke);
-//        zoomToRegion(minX, maxY, maxX, minY);
-//    }
 
     private void paintGraphics(Graphics2D canvas) {
         Stroke dashed = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,
@@ -474,6 +465,9 @@ public class GraphicsDisplay extends JPanel {
 
     public void setRotate(boolean rotate) {
         Rotate = rotate;
+        AbilytyToRotate = true;
+        displayGraphics(graphicsData);
+        repaint();
     }
 
     protected int findSelectedPoint(int x, int y) {
