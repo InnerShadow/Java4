@@ -32,7 +32,7 @@ public class GraphicsDisplay extends JPanel {
         markerStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
                 BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
         axisFont = new Font("Serif", Font.BOLD, 36);
-        areaFont = new Font("Serif", Font.BOLD, 8);
+        areaFont = new Font("Serif", Font.BOLD, 16);
     }
     public void showGraphics(Double[][] graphicsData) {
         this.graphicsData = graphicsData;
@@ -53,6 +53,7 @@ public class GraphicsDisplay extends JPanel {
     }
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
+
         if (graphicsData==null || graphicsData.length==0) return;
         minX = graphicsData[0][0];
         maxX = graphicsData[graphicsData.length-1][0];
@@ -78,7 +79,6 @@ public class GraphicsDisplay extends JPanel {
 
         double scaleX = getSize().getWidth() / (maxX - minX);
         double scaleY = getSize().getHeight() / (maxY - minY);
-
 
         scale = Math.min(scaleX, scaleY);
         if (scale==scaleX) {
@@ -237,9 +237,18 @@ public class GraphicsDisplay extends JPanel {
                 Rectangle2D bounds = areaFont.getStringBounds(finalArea, context);
                 Point2D.Double labelPos = new Point2D.Double();
                 labelPos.x = (float)(beginSpot.x + (endSpot.x - beginSpot.x) / 4 - 2);
-                labelPos.y = (float)(mainY + (highestPoint.y - mainY) / 4);
-                System.out.println(finalArea);
+                labelPos.y = (float)(highestPoint.y - highestPoint.y / 16);
+                if(Rotate){
+                    labelPos.x = (float)(beginSpot.x + (endSpot.x - beginSpot.x) / 4 - 2);
+                    labelPos.y = (float)(highestPoint.y - highestPoint.y / 8);
+                }
+                if(Rotate){
+                    canvas.rotate(Math.PI / 2, labelPos.x, labelPos.y);
+                }
                 canvas.drawString(finalArea, (float)labelPos.x, (float)labelPos.y);
+                if(Rotate){
+                    canvas.rotate(3 * Math.PI / 2,  labelPos.x, labelPos.y);
+                }
             }
         }
     }
@@ -250,10 +259,19 @@ public class GraphicsDisplay extends JPanel {
         canvas.setFont(axisFont);
                 FontRenderContext context = canvas.getFontRenderContext();
         if (minX<=0.0 && maxX>=0.0) {
-                    canvas.draw(new Line2D.Double(xyToPoint(0, maxY),
-                            xyToPoint(0, minY)));
+            if(Rotate){
+                canvas.draw(new Line2D.Double(xyToPoint(0, maxX),
+                        xyToPoint(0, minX)));
+            } else {
+                canvas.draw(new Line2D.Double(xyToPoint(0, maxY),
+                        xyToPoint(0, minY)));
+            }
             GeneralPath arrow = new GeneralPath();
             Point2D.Double lineEnd = xyToPoint(0, maxY);
+            if(Rotate){
+                lineEnd = xyToPoint(0, maxX);
+            }
+
             arrow.moveTo(lineEnd.getX(), lineEnd.getY());
             arrow.lineTo(arrow.getCurrentPoint().getX()+5,
                     arrow.getCurrentPoint().getY()+20);
@@ -264,14 +282,31 @@ public class GraphicsDisplay extends JPanel {
             canvas.fill(arrow);
             Rectangle2D bounds = axisFont.getStringBounds("y", context);
             Point2D.Double labelPos = xyToPoint(0, maxY);
+            if(Rotate){
+                labelPos = xyToPoint(minX, 0);
+                canvas.rotate(Math.PI / 2, xyToPoint(0, 0).x, xyToPoint(0,0).y);
+            }
+
             canvas.drawString("y", (float)labelPos.getX() + 10,
                     (float)(labelPos.getY() - bounds.getY()));
+            if (Rotate){
+                canvas.rotate(3 * Math.PI / 2, xyToPoint(0, 0).x, xyToPoint(0,0).y);
+            }
         }
         if (minY<=0.0 && maxY>=0.0) {
-                    canvas.draw(new Line2D.Double(xyToPoint(minX, 0),
-                            xyToPoint(maxX, 0)));
+            if(Rotate){
+                canvas.draw(new Line2D.Double(xyToPoint(minY, 0),
+                        xyToPoint(maxY, 0)));
+            } else {
+                canvas.draw(new Line2D.Double(xyToPoint(minX, 0),
+                        xyToPoint(maxX, 0)));
+            }
+
             GeneralPath arrow = new GeneralPath();
             Point2D.Double lineEnd = xyToPoint(maxX, 0);
+            if(Rotate){
+                lineEnd = xyToPoint(maxY, 0);
+            }
             arrow.moveTo(lineEnd.getX(), lineEnd.getY());
             arrow.lineTo(arrow.getCurrentPoint().getX()-20,
                     arrow.getCurrentPoint().getY()-5);
@@ -282,8 +317,15 @@ public class GraphicsDisplay extends JPanel {
             canvas.fill(arrow);
             Rectangle2D bounds = axisFont.getStringBounds("x", context);
             Point2D.Double labelPos = xyToPoint(maxX, 0);
+            if(Rotate){
+                labelPos = xyToPoint(0, maxY);
+                canvas.rotate(Math.PI / 2, xyToPoint(0, 0).x, xyToPoint(0,0).y);
+            }
             canvas.drawString("x", (float)(labelPos.getX() -
-                    bounds.getWidth() - 10), (float)(labelPos.getY() + bounds.getY()));
+                    bounds.getWidth() - 10), (float)(labelPos.getY() + bounds.getY()) + 80);
+            if (Rotate){
+                canvas.rotate(3 * Math.PI / 2, xyToPoint(0, 0).x, xyToPoint(0,0).y);
+            }
         }
     }
     protected Point2D.Double xyToPoint(double x, double y) {
