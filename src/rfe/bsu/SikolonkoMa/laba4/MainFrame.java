@@ -106,7 +106,7 @@ protected void openGraphics(File selectedFile) {
         }
         if (graphicsData!=null && graphicsData.length>0) {
             fileLoaded = true;
-            display.showGraphics(graphicsData);
+            display.displayGraphics(graphicsData);
         }
             in.close();
         } catch (FileNotFoundException ex) {
@@ -129,7 +129,19 @@ protected void openGraphics(File selectedFile) {
         }
 public static void main(String[] args) {
 
-
+    //    try(DataOutputStream dos = new DataOutputStream(new FileOutputStream("data_2.bin")))
+//    {
+//    for(Double i = -10.0; i < 10; i += 0.1){
+//
+//            dos.writeDouble(i);
+//            dos.writeDouble(Math.sin(Math.pow(i, 2)) + Math.log(Math.pow(i, 2) + 1) - 3);
+//
+//        }
+//
+//    }catch(IOException ex){
+//
+//        System.out.println(ex.getMessage());
+//    }
 
 
         MainFrame frame = new MainFrame();
