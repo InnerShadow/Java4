@@ -15,13 +15,12 @@ import java.util.ArrayList;
 @SuppressWarnings("serial")
 public class GraphicsDisplay extends JPanel {
     private Double[][] graphicsData;
-    private ArrayList<Double[]> originalData;
+    private Double[][] originalData;
     private boolean showAxis = true;
     private boolean firstlunc = true;
     private boolean showMarkers = true;
     private boolean showArea = false;
     private boolean Rotate = false;
-    private boolean AbilytyToRotate = true;
     private double minX;
     private double maxX;
     private double minY;
@@ -71,6 +70,10 @@ public class GraphicsDisplay extends JPanel {
         addMouseListener(new MouseHandler());
         addMouseMotionListener(new MouseMotionHandler());
     }
+
+    public Double[][] getGraphicsData(){
+        return graphicsData;
+    }
     public void showGraphics(Double[][] graphicsData) {
         this.graphicsData = graphicsData;
         repaint();
@@ -91,16 +94,6 @@ public class GraphicsDisplay extends JPanel {
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
 
-//        if(Rotate && AbilytyToRotate){
-//            System.out.println("Xyi");
-//            double tmp = maxX;
-//            maxX = maxY;
-//            maxY = tmp;
-//            tmp = minX;
-//            minX = minY;
-//            minY = tmp;
-//            AbilytyToRotate = false;
-//        }
         double scaleX = getSize().getWidth() / (viewport[1][0] - viewport[0][0]);;
         double scaleY = getSize().getHeight() / (viewport[0][1] - viewport[1][1]);
 
@@ -165,14 +158,18 @@ public class GraphicsDisplay extends JPanel {
         repaint();
     }
 
-    public void displayGraphics(Double[][] graphicsData) {
-        this.graphicsData = graphicsData;
-        if (graphicsData==null || graphicsData.length==0) return;
-        originalData = new ArrayList<Double[]>(graphicsData.length);
-        for (final Double[] point : graphicsData) {
-            Double[] newPoint = { new Double(point[0]), new Double(point[1]) };
-            this.originalData.add(newPoint);
+    public void displayGraphics(Double[][] GraphicsData, Double[][] OriginalData) {
+        this.graphicsData = new Double[GraphicsData.length][];
+        originalData = new Double[OriginalData.length][];
+        for(int i = 0; i < GraphicsData.length; i++){
+            double x = GraphicsData[i][0];
+            double y = GraphicsData[i][1];
+            this.graphicsData[i] = new Double[]{x, y};
+            x = OriginalData[i][0];
+            y = OriginalData[i][1];
+            originalData[i] = new Double[]{x, y};
         }
+        if (graphicsData==null || graphicsData.length==0) return;
         minX = graphicsData[0][0];
         maxX = graphicsData[graphicsData.length-1][0];
         minY = graphicsData[0][1];
@@ -185,7 +182,7 @@ public class GraphicsDisplay extends JPanel {
                 maxY = graphicsData[i][1];
             }
         }
-        
+
         if(Rotate){
             double tmp = maxX;
             maxX = maxY;
@@ -225,7 +222,7 @@ public class GraphicsDisplay extends JPanel {
     }
     protected void paintMarkers(Graphics2D canvas) {
         canvas.setStroke(markerStroke);
-        canvas.setStroke(new BasicStroke(2));
+        canvas.setStroke(new BasicStroke(1));
         canvas.setPaint(Color.BLACK);
         Ellipse2D.Double lastMarker = null;
         int i_n = -1;
@@ -236,7 +233,7 @@ public class GraphicsDisplay extends JPanel {
                     continue;
                 }
                 Point2D.Double center = xyToPoint(point[0], point[1]);
-                Point2D.Double corner = shiftPoint(center, 11, 11);
+                Point2D.Double corner = shiftPoint(center, 7, 7);
                 boolean sign = true;
                 int prev_num = 0;
 
@@ -269,8 +266,8 @@ public class GraphicsDisplay extends JPanel {
             }
         }
         if (lastMarker != null) {
-            canvas.setColor(Color.BLUE);
-            canvas.setPaint(Color.BLUE);
+            canvas.setColor(Color.MAGENTA);
+            canvas.setPaint(Color.MAGENTA);
             canvas.draw(lastMarker);
             canvas.fill(lastMarker);
         }
@@ -286,7 +283,7 @@ public class GraphicsDisplay extends JPanel {
             String label = "X=" + GraphicsDisplay.formatter.format(graphicsData[selectedMarker][0]) +
                     ", Y=" + GraphicsDisplay.formatter.format(graphicsData[selectedMarker][1]);
             Rectangle2D bounds = labelsFont.getStringBounds(label, context);
-            canvas.setColor(Color.BLUE);
+            canvas.setColor(Color.MAGENTA);
             canvas.drawString(label, (float)(point.getX() + 5.0), (float)(point.getY() - bounds.getHeight()));
         }
     }
@@ -465,8 +462,7 @@ public class GraphicsDisplay extends JPanel {
 
     public void setRotate(boolean rotate) {
         Rotate = rotate;
-        AbilytyToRotate = true;
-        displayGraphics(graphicsData);
+        displayGraphics(graphicsData, originalData);
         repaint();
     }
 
@@ -488,12 +484,7 @@ public class GraphicsDisplay extends JPanel {
     }
 
     public void reset() {
-        Double[][] tmp = new Double[originalData.size()][2];
-        for(int i = 0; i < originalData.size(); i++){
-            tmp[i][0] = originalData.get(i)[0];
-            tmp[i][1] = originalData.get(i)[0];
-        }
-        displayGraphics(tmp);
+        displayGraphics(originalData, originalData);
     }
 
     static /* synthetic */ void access$1(GraphicsDisplay graphicsDisplay, double[][] viewport) {

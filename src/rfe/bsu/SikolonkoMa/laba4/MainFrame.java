@@ -26,6 +26,9 @@ public class MainFrame extends JFrame {
     private JCheckBoxMenuItem RotateMenuItem;
     private GraphicsDisplay display = new GraphicsDisplay();
     private boolean fileLoaded = false;
+
+    private Action RestAction;
+    private Action SaveAction;
     public MainFrame() {
         super("Build Graphics");
                 setSize(WIDTH, HEIGHT);
@@ -47,15 +50,39 @@ public class MainFrame extends JFrame {
                     JFileChooser.APPROVE_OPTION)
                 openGraphics(fileChooser.getSelectedFile());
         }
-    };
-    fileMenu.add(openGraphicsAction);
-    JMenu graphicsMenu = new JMenu("Graphic");
-    menuBar.add(graphicsMenu);
-    Action showAxisAction = new AbstractAction("Show axis") {
-    public void actionPerformed(ActionEvent event) {
-        display.setShowAxis(showAxisMenuItem.isSelected());
-    }
-};
+        };
+        fileMenu.add(openGraphicsAction);
+
+        RestAction = new AbstractAction("Reset") {
+            public void actionPerformed(ActionEvent event) {
+                display.reset();
+            }
+        };
+        fileMenu.add(RestAction);
+        RestAction.setEnabled(false);
+
+        SaveAction = new AbstractAction("Save changed data") {
+            public void actionPerformed(ActionEvent event) {
+                if (fileChooser == null) {
+                    fileChooser = new JFileChooser();
+                    fileChooser.setCurrentDirectory(new File("."));
+                }
+                if (fileChooser.showSaveDialog(MainFrame.this) ==
+                        JFileChooser.APPROVE_OPTION) ;
+                SaveFile(fileChooser.getSelectedFile());
+            }
+        };
+        fileMenu.add(SaveAction);
+        SaveAction.setEnabled(false);
+
+
+        JMenu graphicsMenu = new JMenu("Graphic");
+        menuBar.add(graphicsMenu);
+        Action showAxisAction = new AbstractAction("Show axis") {
+            public void actionPerformed(ActionEvent event) {
+                display.setShowAxis(showAxisMenuItem.isSelected());
+            }
+        };
         showAxisMenuItem = new JCheckBoxMenuItem(showAxisAction);
         graphicsMenu.add(showAxisMenuItem);
         showAxisMenuItem.setSelected(true);
@@ -92,41 +119,61 @@ public class MainFrame extends JFrame {
         getContentPane().add(display, BorderLayout.CENTER);
         }
 
-protected void openGraphics(File selectedFile) {
+    protected void openGraphics(File selectedFile) {
         try {
             DataInputStream in = new DataInputStream(new FileInputStream(selectedFile));
-            Double[][] graphicsData = new
-            Double[in.available()/(Double.SIZE/8)/2][];
+            Double[][] graphicsData = new Double[in.available()/(Double.SIZE/8)/2][];
+            Double[][] originalData = new Double[in.available()/(Double.SIZE/8)/2][];
             int i = 0;
             Double val = 0.1;
             while (in.available()>0) {
                 Double x = in.readDouble();
                 Double y = in.readDouble();
-                graphicsData[i++] = new Double[]{x, y};
+                graphicsData[i] = new Double[]{x, y};
+                originalData[i++] = new Double[]{x, y};
             }
         if (graphicsData!=null && graphicsData.length>0) {
             fileLoaded = true;
-            display.displayGraphics(graphicsData);
+            display.displayGraphics(graphicsData, originalData);
         }
             in.close();
         } catch (FileNotFoundException ex) {
         JOptionPane.showMessageDialog(MainFrame.this, "File doesn't found",
                 "Cannot upload data",
                 JOptionPane.WARNING_MESSAGE);
+            RestAction.setEnabled(false);
             showAreaMenuItem.setEnabled(false);
             RotateMenuItem.setEnabled(false);
-        return;
+            SaveAction.setEnabled(false);
+            return;
         } catch (IOException ex) {
         JOptionPane.showMessageDialog(MainFrame.this, "Error in reading data from the file",
                 "Cannot upload data",
         JOptionPane.WARNING_MESSAGE);
+            RestAction.setEnabled(false);
             showAreaMenuItem.setEnabled(false);
             RotateMenuItem.setEnabled(false);
-        return;
+            SaveAction.setEnabled(false);
+            return;
         }
         showAreaMenuItem.setEnabled(true);
         RotateMenuItem.setEnabled(true);
+        RestAction.setEnabled(true);
+        SaveAction.setEnabled(true);
+    }
+
+    private void SaveFile(File selectedFile){
+        try {
+            DataOutputStream out = new DataOutputStream(new FileOutputStream(selectedFile));
+            Double[][] data = display.getGraphicsData();
+            for (int i = 0; i < data.length; i++) {
+                out.writeDouble((Double) data[i][0]);
+                out.writeDouble((Double) data[i][1]);
+            }
+            out.close();
+        } catch (Exception e) {
         }
+    }
 public static void main(String[] args) {
 
     //    try(DataOutputStream dos = new DataOutputStream(new FileOutputStream("data_2.bin")))
