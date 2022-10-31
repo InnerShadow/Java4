@@ -55,8 +55,9 @@ public class GraphicsDisplay extends JPanel {
         originalPoint = new double[2];
         selectionRect = new Rectangle2D.Double();
         setBackground(Color.WHITE);
-        graphicsStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
-                BasicStroke.JOIN_ROUND, 10.0f, null, 0.0f);
+        BasicStroke dashed = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.CAP_BUTT,
+                0, new float[]{16, 4, 4, 4, 4, 4, 8, 4, 8, 4}, 0);
+        graphicsStroke =  dashed;
         axisStroke = new BasicStroke(2.0f, BasicStroke.CAP_BUTT,
                 BasicStroke.JOIN_MITER, 10.0f, null, 0.0f);
         markerStroke = new BasicStroke(1.0f, BasicStroke.CAP_BUTT,
@@ -71,25 +72,42 @@ public class GraphicsDisplay extends JPanel {
         addMouseMotionListener(new MouseMotionHandler());
     }
 
-    public Double[][] getGraphicsData(){
-        return graphicsData;
-    }
-    public void showGraphics(Double[][] graphicsData) {
-        this.graphicsData = graphicsData;
-        repaint();
-    }
-    public void setShowAxis(boolean showAxis) {
-        this.showAxis = showAxis;
-        repaint();
-    }
+    public void displayGraphics(Double[][] GraphicsData, Double[][] OriginalData) {
+        this.graphicsData = new Double[GraphicsData.length][];
+        originalData = new Double[OriginalData.length][];
+        for(int i = 0; i < GraphicsData.length; i++){
+            double x = GraphicsData[i][0];
+            double y = GraphicsData[i][1];
+            this.graphicsData[i] = new Double[]{x, y};
+            x = OriginalData[i][0];
+            y = OriginalData[i][1];
+            originalData[i] = new Double[]{x, y};
+        }
+        if (graphicsData==null || graphicsData.length==0) return;
+        minX = graphicsData[0][0];
+        maxX = graphicsData[graphicsData.length-1][0];
+        minY = graphicsData[0][1];
+        maxY = minY;
+        for (int i = 1; i<graphicsData.length; i++) {
+            if (graphicsData[i][1]<minY) {
+                minY = graphicsData[i][1];
+            }
+            if (graphicsData[i][1]>maxY) {
+                maxY = graphicsData[i][1];
+            }
+        }
 
-    public void setShowArea(boolean showArea){
-        this.showArea = showArea;
-        repaint();
-    }
-    public void setShowMarkers(boolean showMarkers) {
-        this.showMarkers = showMarkers;
-        repaint();
+        if(Rotate){
+            double tmp = maxX;
+            maxX = maxY;
+            maxY = tmp;
+            tmp = minX;
+            minX = minY;
+            minY = tmp;
+        }
+
+        firstlunc = true;
+        zoomToRegion(minX, maxY, maxX, minY);
     }
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
@@ -143,63 +161,9 @@ public class GraphicsDisplay extends JPanel {
         canvas.setColor(Color.BLACK);
         canvas.draw(selectionRect);
     }
-
-    public void zoomToRegion(double x1, double y1, double x2, double y2) {
-        viewport[0][0] = x1;
-        viewport[0][1] = y1;
-        viewport[1][0] = x2;
-        viewport[1][1] = y2;
-        repaint();
-    }
-
-    protected void DoRotate(Graphics2D canvas) {
-        Point2D.Double ptr = xyToPoint(0, 0);
-        canvas.rotate(3 * Math.PI / 2, ptr.x, ptr.y);
-        repaint();
-    }
-
-    public void displayGraphics(Double[][] GraphicsData, Double[][] OriginalData) {
-        this.graphicsData = new Double[GraphicsData.length][];
-        originalData = new Double[OriginalData.length][];
-        for(int i = 0; i < GraphicsData.length; i++){
-            double x = GraphicsData[i][0];
-            double y = GraphicsData[i][1];
-            this.graphicsData[i] = new Double[]{x, y};
-            x = OriginalData[i][0];
-            y = OriginalData[i][1];
-            originalData[i] = new Double[]{x, y};
-        }
-        if (graphicsData==null || graphicsData.length==0) return;
-        minX = graphicsData[0][0];
-        maxX = graphicsData[graphicsData.length-1][0];
-        minY = graphicsData[0][1];
-        maxY = minY;
-        for (int i = 1; i<graphicsData.length; i++) {
-            if (graphicsData[i][1]<minY) {
-                minY = graphicsData[i][1];
-            }
-            if (graphicsData[i][1]>maxY) {
-                maxY = graphicsData[i][1];
-            }
-        }
-
-        if(Rotate){
-            double tmp = maxX;
-            maxX = maxY;
-            maxY = tmp;
-            tmp = minX;
-            minX = minY;
-            minY = tmp;
-        }
-
-        firstlunc = true;
-        zoomToRegion(minX, maxY, maxX, minY);
-    }
-
     private void paintGraphics(Graphics2D canvas) {
-        Stroke dashed = new BasicStroke(3, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL,
-                0, new float[]{16, 4, 4, 4, 4, 4, 8, 4, 8, 4}, 0);
-        canvas.setStroke(dashed);
+
+        canvas.setStroke(graphicsStroke);
         canvas.setColor(Color.RED);
         Double currentX = null;
         Double currentY = null;
@@ -444,25 +408,10 @@ public class GraphicsDisplay extends JPanel {
             }
         }
     }
-    protected Point2D.Double xyToPoint(double x, double y) {
-        double deltaX = x - this.viewport[0][0];
-        double deltaY = this.viewport[0][1] - y;
-        return new Point2D.Double(deltaX*scale, deltaY*scale);
-    }
 
-    protected double[] translatePointToXY(int x,    int y) {
-        return new double[] { viewport[0][0] + x / scale, viewport[0][1] - y / scale };
-    }
-    protected Point2D.Double shiftPoint(Point2D.Double src, double deltaX,
-                                        double deltaY) {
-        Point2D.Double dest = new Point2D.Double();
-        dest.setLocation(src.getX() + deltaX, src.getY() + deltaY);
-        return dest;
-    }
-
-    public void setRotate(boolean rotate) {
-        Rotate = rotate;
-        displayGraphics(graphicsData, originalData);
+    protected void DoRotate(Graphics2D canvas) {
+        Point2D.Double ptr = xyToPoint(0, 0);
+        canvas.rotate(3 * Math.PI / 2, ptr.x, ptr.y);
         repaint();
     }
 
@@ -483,27 +432,75 @@ public class GraphicsDisplay extends JPanel {
         return -1;
     }
 
+    protected Point2D.Double xyToPoint(double x, double y) {
+        double deltaX = x - this.viewport[0][0];
+        double deltaY = this.viewport[0][1] - y;
+        return new Point2D.Double(deltaX*scale, deltaY*scale);
+    }
+
+    protected double[] translatePointToXY(int x,    int y) {
+        return new double[] { viewport[0][0] + x / scale, viewport[0][1] - y / scale };
+    }
+    protected Point2D.Double shiftPoint(Point2D.Double src, double deltaX,
+                                        double deltaY) {
+        Point2D.Double dest = new Point2D.Double();
+        dest.setLocation(src.getX() + deltaX, src.getY() + deltaY);
+        return dest;
+    }
+
+    public void zoomToRegion(double x1, double y1, double x2, double y2) {
+        viewport[0][0] = x1;
+        viewport[0][1] = y1;
+        viewport[1][0] = x2;
+        viewport[1][1] = y2;
+        repaint();
+    }
+
+
+    public void setRotate(boolean rotate) {
+        Rotate = rotate;
+        displayGraphics(graphicsData, originalData);
+        repaint();
+    }
+
+    public Double[][] getGraphicsData(){
+        return graphicsData;
+    }
+    public void setShowAxis(boolean showAxis) {
+        this.showAxis = showAxis;
+        repaint();
+    }
+
+    public void setShowArea(boolean showArea){
+        this.showArea = showArea;
+        repaint();
+    }
+    public void setShowMarkers(boolean showMarkers) {
+        this.showMarkers = showMarkers;
+        repaint();
+    }
+
     public void reset() {
         displayGraphics(originalData, originalData);
     }
 
-    static /* synthetic */ void access$1(GraphicsDisplay graphicsDisplay, double[][] viewport) {
+    static void SetViewPort(GraphicsDisplay graphicsDisplay, double[][] viewport) {
         graphicsDisplay.viewport = viewport;
     }
 
-    static /* synthetic */ void access$6(GraphicsDisplay graphicsDisplay, int selectedMarker) {
+    static void SetSelectionMarker(GraphicsDisplay graphicsDisplay, int selectedMarker) {
         graphicsDisplay.selectedMarker = selectedMarker;
     }
 
-    static /* synthetic */ void access$7( GraphicsDisplay graphicsDisplay, double[] originalPoint) {
+    static void SetOriginalPoint( GraphicsDisplay graphicsDisplay, double[] originalPoint) {
         graphicsDisplay.originalPoint = originalPoint;
     }
 
-    static /* synthetic */ void access$9(final GraphicsDisplay graphicsDisplay, final boolean changeMode) {
+    static void SetChangeMode(final GraphicsDisplay graphicsDisplay, final boolean changeMode) {
         graphicsDisplay.changeMode = changeMode;
     }
 
-    static /* synthetic */ void access$10(GraphicsDisplay graphicsDisplay, boolean scaleMode) {
+    static void SetScaleMode(GraphicsDisplay graphicsDisplay, boolean scaleMode) {
         graphicsDisplay.scaleMode = scaleMode;
     }
 
@@ -512,7 +509,7 @@ public class GraphicsDisplay extends JPanel {
         public void mouseClicked(MouseEvent ev) {
             if (ev.getButton() == 3) {
                 if (GraphicsDisplay.this.undoHistory.size() > 0) {
-                    GraphicsDisplay.access$1(GraphicsDisplay.this,
+                    GraphicsDisplay.SetViewPort(GraphicsDisplay.this,
                             GraphicsDisplay.this.undoHistory.get(GraphicsDisplay.this.undoHistory.size() - 1));
                     GraphicsDisplay.this.undoHistory.remove(GraphicsDisplay.this.undoHistory.size() - 1);
                 }
@@ -529,16 +526,16 @@ public class GraphicsDisplay extends JPanel {
             if (ev.getButton() != 1) {
                 return;
             }
-            GraphicsDisplay.access$6(GraphicsDisplay.this,
+            GraphicsDisplay.SetSelectionMarker(GraphicsDisplay.this,
                     GraphicsDisplay.this.findSelectedPoint(ev.getX(), ev.getY()));
-            GraphicsDisplay.access$7(GraphicsDisplay.this,
+            GraphicsDisplay.SetOriginalPoint(GraphicsDisplay.this,
                     GraphicsDisplay.this.translatePointToXY(ev.getX(), ev.getY()));
             if (GraphicsDisplay.this.selectedMarker >= 0) {
-                GraphicsDisplay.access$9(GraphicsDisplay.this, true);
+                GraphicsDisplay.SetChangeMode(GraphicsDisplay.this, true);
                 GraphicsDisplay.this.setCursor(Cursor.getPredefinedCursor(8));
             }
             else {
-                GraphicsDisplay.access$10(GraphicsDisplay.this, true);
+                GraphicsDisplay.SetScaleMode(GraphicsDisplay.this, true);
                 GraphicsDisplay.this.setCursor(Cursor.getPredefinedCursor(5));
                 GraphicsDisplay.this.selectionRect.setFrame(ev.getX(), ev.getY(), 1.0, 1.0);
             }
@@ -551,13 +548,13 @@ public class GraphicsDisplay extends JPanel {
             }
             GraphicsDisplay.this.setCursor(Cursor.getPredefinedCursor(0));
             if (GraphicsDisplay.this.changeMode) {
-                GraphicsDisplay.access$9(GraphicsDisplay.this, false);
+                GraphicsDisplay.SetChangeMode(GraphicsDisplay.this, false);
             }
             else {
-                GraphicsDisplay.access$10(GraphicsDisplay.this, false);
+                GraphicsDisplay.SetScaleMode(GraphicsDisplay.this, false);
                 double[] finalPoint = GraphicsDisplay.this.translatePointToXY(ev.getX(), ev.getY());
                 GraphicsDisplay.this.undoHistory.add(GraphicsDisplay.this.viewport);
-                GraphicsDisplay.access$1(GraphicsDisplay.this, new double[2][2]);
+                GraphicsDisplay.SetViewPort(GraphicsDisplay.this, new double[2][2]);
                 GraphicsDisplay.this.zoomToRegion(GraphicsDisplay.this.originalPoint[0], GraphicsDisplay.this.originalPoint[1],
                         finalPoint[0], finalPoint[1]);
                 GraphicsDisplay.this.repaint();
@@ -568,7 +565,7 @@ public class GraphicsDisplay extends JPanel {
     public class MouseMotionHandler implements MouseMotionListener {
         @Override
         public void mouseMoved(MouseEvent ev) {
-            GraphicsDisplay.access$6(GraphicsDisplay.this,
+            GraphicsDisplay.SetSelectionMarker(GraphicsDisplay.this,
                     GraphicsDisplay.this.findSelectedPoint(ev.getX(), ev.getY()));
             if (GraphicsDisplay.this.selectedMarker >= 0) {
                 GraphicsDisplay.this.setCursor(Cursor.getPredefinedCursor(8));
